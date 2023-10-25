@@ -8,18 +8,22 @@
     },
     {
       "path": "wake-on-lan-discord"
-    },
-    {
-      "path": "wake-on-lan-discord/bot"
     }
   ],
   "settings": {
     "editor.formatOnSave": true,
+    "python.formatting.provider": "none",
     "[json]": {
       "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[jsonc]": {
       "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[python]": {
+      "editor.defaultFormatter": "eeyore.yapf"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "vscode.typescript-language-features"
     }
   },
   "extensions": {

@@ -1,7 +1,10 @@
 __pycache__/
 .venv/
+.wrangler/
 arduino-build/
+node_modules/
 target/
 
 .pdm-python
 c_cpp_properties.json
+secrets.*
