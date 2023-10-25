@@ -1,3 +1,7 @@
+__pycache__/
+.venv/
 arduino-build/
 target/
+
+.pdm-python
 c_cpp_properties.json

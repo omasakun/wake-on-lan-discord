@@ -1,0 +1,31 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "sketch0"
+    },
+    {
+      "path": "wake-on-lan-discord"
+    },
+    {
+      "path": "wake-on-lan-discord/bot"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "[json]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "vsciot-vscode.vscode-arduino",
+      "ms-vscode.cpptools"
+    ]
+  }
+}
