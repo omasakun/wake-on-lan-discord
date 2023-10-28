@@ -85,6 +85,10 @@ router.get(
   withBasicAuth(async (request, env) => {
     const exists = await env.DB.prepare('SELECT * FROM interactions LIMIT 1').all()
 
+    if (!exists.results) {
+      console.log('poll: error', exists)
+      return new Response('error', { status: 500 })
+    }
     if (exists.results.length === 0) {
       return new Response('noop', { status: 200 })
     } else {
@@ -103,6 +107,11 @@ router.post(
       env.DB.prepare('SELECT * FROM interactions'),
       env.DB.prepare('DELETE FROM interactions'),
     ])
+
+    if (!interactions.results) {
+      console.log('report: error', interactions)
+      return new Response('error', { status: 500 })
+    }
 
     // https://discord.com/developers/docs/reference#api-versioning
     // https://discord.com/developers/docs/interactions/receiving-and-responding#edit-original-interaction-response
@@ -127,7 +136,9 @@ router.post(
     const texts = await Promise.all(res.map(async (r) => r.text()))
     console.log({ texts })
 
-    return new Response(`ok / ${interactions.results.length}`, { status: 200 })
+    return new Response(`ok (responded to ${interactions.results.length} interactions)`, {
+      status: 200,
+    })
   }),
 )
 

@@ -9,3 +9,4 @@ target/
 .pdm-python
 c_cpp_properties.json
 secrets.*
+!secrets.h

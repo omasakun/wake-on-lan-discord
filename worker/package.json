@@ -1,9 +1,11 @@
 {
   "private": true,
+  "type": "module",
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
+    "register": "ts-node src/register.ts",
     "init-d1:local": "wrangler d1 execute wake-on-lan --local --file=schema.sql",
     "init-d1:prod": "wrangler d1 execute wake-on-lan --file=schema.sql",
     "wrangler": "wrangler"
@@ -15,6 +17,7 @@
   },
   "dependencies": {
     "discord-interactions": "^3.4.0",
-    "itty-router": "^4.0.23"
+    "itty-router": "^4.0.23",
+    "ts-node": "^10.9.1"
   }
 }
