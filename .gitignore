@@ -1,6 +1,7 @@
 __pycache__/
 .venv/
 .wrangler/
+*.egg-info/
 arduino-build/
 node_modules/
 target/

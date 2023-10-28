@@ -1,11 +1,10 @@
 {
-  "name": "first-responder",
-  "version": "0.0.0",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev"
+    "start": "wrangler dev",
+    "wrangler": "wrangler"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230419.0",
@@ -13,6 +12,7 @@
     "wrangler": "^3.0.0"
   },
   "dependencies": {
-    "discord-interactions": "^3.4.0"
+    "discord-interactions": "^3.4.0",
+    "itty-router": "^4.0.23"
   }
 }
