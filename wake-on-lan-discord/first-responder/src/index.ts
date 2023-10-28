@@ -3,8 +3,13 @@
 // Run `npm run deploy` to publish your worker
 // Learn more at https://developers.cloudflare.com/workers/
 
+// https://discord.com/developers/applications
+// https://dash.cloudflare.com/
+
 import { Router } from "itty-router";
 import {
+  APP_ID,
+  BOT_TOKEN,
   CHANNEL_ID,
   ESP32_PASS,
   ESP32_USER,
@@ -18,25 +23,13 @@ import {
 } from "discord-interactions";
 
 export interface Env {
-  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-  // MY_KV_NAMESPACE: KVNamespace;
-  //
-  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-  // MY_DURABLE_OBJECT: DurableObjectNamespace;
-  //
-  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-  // MY_BUCKET: R2Bucket;
-  //
-  // Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
-  // MY_SERVICE: Fetcher;
-  //
-  // Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
-  // MY_QUEUE: Queue;
+  // see: wrangler.toml
+  DB: D1Database;
 }
 
-const router = Router<Request>();
+const router = Router<Request, [env: Env, ctx: ExecutionContext]>();
 
-router.post("/discord", async (request) => {
+router.post("/discord", async (request, env, ctx) => {
   const { isValid, interaction } = await verifyDiscordRequest(request);
   if (!isValid) return new Response("Bad Request Signature", { status: 401 });
 
@@ -73,11 +66,19 @@ router.post("/discord", async (request) => {
           });
         }
 
+        const id = interaction.id;
+        const token = interaction.token;
+
+        await env.DB.prepare(
+          "INSERT INTO interactions (id, token) VALUES (?, ?)"
+        )
+          .bind(id, token)
+          .run();
+
+        console.log({ interaction });
+
         return new JsonResponse({
           type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            content: "Processing...",
-          },
         });
       }
     }
@@ -87,16 +88,66 @@ router.post("/discord", async (request) => {
 
 router.get(
   "/poll",
-  withBasicAuth(async (request) => {
-    return new Response("OK", { status: 200 });
+  withBasicAuth(async (request, env) => {
+    const exists = await env.DB.prepare(
+      "SELECT * FROM interactions LIMIT 1"
+    ).all();
+
+    if (exists.results.length === 0) {
+      return new Response("noop", { status: 200 });
+    } else {
+      return new Response("wake", { status: 200 });
+    }
+  })
+);
+
+router.post(
+  "/report",
+  withBasicAuth(async (request, env) => {
+    const text = await request.text();
+
+    // get all interactions and delete them
+    const [interactions, _] = await env.DB.batch([
+      env.DB.prepare("SELECT * FROM interactions"),
+      env.DB.prepare("DELETE FROM interactions"),
+    ]);
+
+    // https://discord.com/developers/docs/reference#api-versioning
+    // https://discord.com/developers/docs/interactions/receiving-and-responding#edit-original-interaction-response
+    const res = await Promise.all(
+      interactions.results.map(async (interaction: any) =>
+        fetch(
+          `https://discord.com/api/v10/webhooks/${APP_ID}/${interaction.token}/messages/@original`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bot ${BOT_TOKEN}`,
+            },
+            body: JSON.stringify({
+              content: text,
+            }),
+          }
+        )
+      )
+    );
+
+    const texts = await Promise.all(res.map(async (r) => r.text()));
+    console.log({ texts });
+
+    return new Response(`ok / ${interactions.results.length}`, { status: 200 });
   })
 );
 
 router.all("*", () => new Response("Not Found", { status: 404 }));
 
 export default {
-  async fetch(request: Request): Promise<Response> {
-    return router.handle(request);
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext
+  ): Promise<Response> {
+    return router.handle(request, env, ctx);
   },
 };
 
@@ -110,16 +161,18 @@ async function verifyDiscordRequest(request: Request) {
   return { interaction: JSON.parse(body), isValid: true };
 }
 
-function withBasicAuth(f: (request: Request) => Promise<Response>) {
-  return async (request: Request) => {
+function withBasicAuth(
+  f: (request: Request, env: Env, ctx: ExecutionContext) => Promise<Response>
+) {
+  return async (request: Request, env: Env, ctx: ExecutionContext) => {
     // see: https://developers.cloudflare.com/workers/examples/basic-auth/
     const { protocol, pathname } = new URL(request.url);
     const forwardedProto = request.headers.get("x-forwarded-proto");
     const authHeader = request.headers.get("authorization");
 
-    // if (protocol !== "https:" || forwardedProto !== "https") {
-    //   return new Response("HTTPS Only", { status: 400 });
-    // }
+    if (protocol !== "https:" || forwardedProto !== "https") {
+      return new Response("HTTPS Only", { status: 400 });
+    }
 
     if (authHeader === null) {
       return new Response("Unauthorized", {
@@ -155,7 +208,7 @@ function withBasicAuth(f: (request: Request) => Promise<Response>) {
       });
     }
 
-    return f(request);
+    return f(request, env, ctx);
   };
 }
 
@@ -171,6 +224,10 @@ function safeEqual(a: string, b: string) {
   for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
 
   return diff === 0;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 class JsonResponse extends Response {

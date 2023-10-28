@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS interactions;
+CREATE TABLE IF NOT EXISTS interactions (id TEXT PRIMARY KEY, token TEXT);

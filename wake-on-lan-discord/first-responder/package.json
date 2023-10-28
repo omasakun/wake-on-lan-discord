@@ -4,6 +4,8 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
+    "init-d1:local": "wrangler d1 execute wake-on-lan --local --file=schema.sql",
+    "init-d1:prod": "wrangler d1 execute wake-on-lan --file=schema.sql",
     "wrangler": "wrangler"
   },
   "devDependencies": {
