@@ -1,8 +1,8 @@
-name = "{{replace: name}}"
+name = "wake-on-lan"
 main = "src/index.ts"
 compatibility_date = "2023-10-23"
 
 [[d1_databases]]
 binding = "DB" # i.e. available in your Worker on env.DB
 database_name = "wake-on-lan"
-database_id = "{{replace: databse_id}}"
+database_id = "2a9c3c9e-5374-4da5-8c5d-bbf66dc3ba0f"
